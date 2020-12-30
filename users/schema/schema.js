@@ -11,21 +11,28 @@ const {
     GraphQLInt,
     GraphQLString,
     GraphQLSchema,
+    GraphQLList,
 } = graphql
 
 const CompanyType = new GraphQLObjectType({
     name: "Company",
-    fields: {
+    fields: () => ({
         id: { type: GraphQLString},
         name: {type: GraphQLString},
-        description: {type: GraphQLString}
-    }
+        description: {type: GraphQLString},
+        users: {
+            type: new GraphQLList(UserType),
+            resolve(parentValue, args) {
+                return axios.get(`${host}/companies/${parentValue.id}/users`).then(res => res.data)
+            }
+        }
+    })
 })
 
 //This instructs GraphQL what a user object is
 const UserType = new GraphQLObjectType({
     name: 'User',
-    fields: {
+    fields: () => ({
         id: { type: GraphQLString },
         firstName: { type: GraphQLString },
         age: { type: GraphQLInt },
@@ -35,7 +42,7 @@ const UserType = new GraphQLObjectType({
                return  axios.get(`${host}/companies/${parentValue.companyId }`).then(res => res.data)
             }
         }
-    }
+    })
 })
 
 const RootQuery = new GraphQLObjectType({
