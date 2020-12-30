@@ -4,12 +4,23 @@
 const graphql = require('graphql')
 const axios = require('axios')
 
+const host = `http://localhost:3000`
+
 const {
     GraphQLObjectType,
     GraphQLInt,
     GraphQLString,
-    GraphQLSchema
+    GraphQLSchema,
 } = graphql
+
+const CompanyType = new GraphQLObjectType({
+    name: "Company",
+    fields: {
+        id: { type: GraphQLString},
+        name: {type: GraphQLString},
+        description: {type: GraphQLString}
+    }
+})
 
 //This instructs GraphQL what a user object is
 const UserType = new GraphQLObjectType({
@@ -17,7 +28,13 @@ const UserType = new GraphQLObjectType({
     fields: {
         id: { type: GraphQLString },
         firstName: { type: GraphQLString },
-        age: { type: GraphQLInt }
+        age: { type: GraphQLInt },
+        company: {  //Needs a resolve function to associate the data
+            type: CompanyType,
+            resolve(parentValue, args) {
+               return  axios.get(`${host}/companies/${parentValue.companyId }`).then(res => res.data)
+            }
+        }
     }
 })
 
@@ -28,7 +45,14 @@ const RootQuery = new GraphQLObjectType({
             type: UserType,
             args: { id: { type: GraphQLString  } },
             resolve(parentValue, args) {
-               return axios.get( `http://localhost:3000/users/${args.id}`).then(response => response.data)
+               return axios.get( `${host}/users/${args.id}`).then(response => response.data)
+            }
+        },
+        company: {
+            type: CompanyType,
+            args: {id: {type:GraphQLString}},
+            resolve(parentValue, args) {
+                return axios.get(`${host}/companies/${args.id}`).then(response => response.data)
             }
         }
     }
